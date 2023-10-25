@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Group Availability</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 0 auto;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 8px;
+        }
+        #overlapDates {
+            font-size: 32px;
+            text-align: center;
+        }
+        #sadFace {
+            font-size: 48px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Group Availability</h1>
+    <p>Enter your name and date range:</p>
+    <form id="availabilityForm">
+        <input type="text" id="name" placeholder="Your Name" required>
+        <input type="date" id="startDate" required>
+        <input type="date" id="endDate" required>
+        <button type="button" onclick="addAvailability()">Add Availability</button>
+    </form>
+    <br>
+    <table id="availabilityTable">
+        <tr>
+            <th>Name</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+        </tr>
+    </table>
+    <p>Overlapping Date Ranges:</p>
+    <div id="overlapDates"></div>
+    <div id="sadFace"></div>
+    <button id="resetButton" style="display: none;" onclick="resetPage()">Reset</button>
+
+    <script>
+        let availabilityData = [];
+
+        function addAvailability() {
+            const name = document.getElementById("name").value;
+            const startDate = new Date(document.getElementById("startDate").value);
+            const endDate = new Date(document.getElementById("endDate").value);
+            availabilityData.push({ name, startDate, endDate });
+
+            updateTable();
+            findOverlapDateRanges();
+        }
+
+        function updateTable() {
+            const table = document.getElementById("availabilityTable");
+            const newRow = table.insertRow(table.rows.length);
+            const cell1 = newRow.insertCell(0);
+            const cell2 = newRow.insertCell(1);
+            const cell3 = newRow.insertCell(2);
+            const lastData = availabilityData[availabilityData.length - 1];
+            cell1.innerHTML = lastData.name;
+            cell2.innerHTML = lastData.startDate.toDateString();
+            cell3.innerHTML = lastData.endDate.toDateString();
+
+            document.getElementById("name").value = '';
+            document.getElementById("startDate").value = '';
+            document.getElementById("endDate").value = '';
+        }
+
+        function findOverlapDateRanges() {
+            const overlapRanges = [];
+            for (let i = 0; i < availabilityData.length - 1; i++) {
+                for (let j = i + 1; j < availabilityData.length; j++) {
+                    const range1 = availabilityData[i];
+                    const range2 = availabilityData[j];
+                    if (
+                        range1.startDate <= range2.endDate &&
+                        range2.startDate <= range1.endDate
+                    ) {
+                        const overlapStart = new Date(Math.max(range1.startDate, range2.startDate));
+                        const overlapEnd = new Date(Math.min(range1.endDate, range2.endDate));
+                        overlapRanges.push({
+                            name1: range1.name,
+                            name2: range2.name,
+                            startDate: overlapStart,
+                            endDate: overlapEnd,
+                        });
+                    }
+                }
+            }
+
+            const overlapDatesElement = document.getElementById("overlapDates");
+            const sadFaceElement = document.getElementById("sadFace");
+            overlapDatesElement.innerHTML = "";
+            sadFaceElement.innerHTML = "";
+
+            if (overlapRanges.length > 0) {
+                overlapRanges.forEach(range => {
+                    overlapDatesElement.innerHTML += `${range.name1} and ${range.name2} can travel from ${range.startDate.toDateString()} to ${range.endDate.toDateString()}<br>`;
+                });
+
+                if (availabilityData.length === overlapRanges.length * 2) {
+                    const combinedStartDate = new Date(Math.min(...overlapRanges.map(r => r.startDate)));
+                    const combinedEndDate = new Date(Math.max(...overlapRanges.map(r => r.endDate)));
+                    overlapDatesElement.style.fontSize = "48px";
+                    overlapDatesElement.innerHTML = `Everyone can travel from ${combinedStartDate.toDateString()} to ${combinedEndDate.toDateString()}`;
+                    document.getElementById("resetButton").style.display = "block";
+                } else {
+                    sadFaceElement.innerHTML = "(╥_╥)";
+                }
+            } else {
+                overlapDatesElement.innerHTML = "No overlapping date ranges found.";
+            }
+        }
+
+        function resetPage() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
